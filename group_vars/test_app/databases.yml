@@ -1,0 +1,16 @@
+---
+
+mysql_databases:
+  - dbname1
+
+mysql_users:
+  - username: "dbuser"
+    password: "MyDefaultPass1337!"
+    hosts:
+      - "%"
+      - "127.0.0.1"
+      - "::1"
+      - "localhost"
+    priv:
+      - "dbname1.*:ALL"
+

@@ -1,0 +1,12 @@
+---
+
+- name: Start deployment
+  
+  hosts: test_app
+
+  roles:
+  - { role: users }
+  - { role: mariadb }
+  - { role: php }
+  - { role: nginx }
+# - { role: wordpress }

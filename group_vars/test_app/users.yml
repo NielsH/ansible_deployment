@@ -1,0 +1,23 @@
+---
+
+# Be careful with passwords here
+# The ones uploaded to git should not be important
+users:
+  - {
+    username: "nuvini",
+    password_hash: "$6$gPRy6PfdUsQsj$cP3JbUR4ARIdD0T5R5/rYzAqIJz4ojfQy9DfN7d8ZwJ2F5tWlQ7G/V4kA3A4uCkVTzyudeHDZ9YJDONZzAbYn1",
+    primary_group: "nuvini",
+    secondary_groups: [],
+    shell: "/bin/bash",
+    homedir: "/srv/www/ansible.nuvini.com",
+    system: "no",
+  }
+  - {
+    username: "{{ nginx_user }}",
+    password_hash: None,
+    primary_group: "{{ nginx_user }}",
+    secondary_groups: [],
+    shell: "/bin/false",
+    homedir: "/nonexistent",
+    system: "yes",
+  }

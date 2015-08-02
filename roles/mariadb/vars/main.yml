@@ -1,0 +1,5 @@
+---
+
+mariadb_root_username: "root"
+mariadb_root_password: "password5"
+mariadb_config_path: /etc/mysql/my.cnf

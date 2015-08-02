@@ -1,0 +1,71 @@
+---
+
+- name: Ensure nginx signing key is installed
+  apt_key:
+    url: "http://nginx.org/keys/nginx_signing.key"
+
+- name: Ensure nginx repository is present
+  apt_repository: repo="{{item}}" state=present
+  with_items:
+    - "deb http://nginx.org/packages/{{ ansible_distribution|lower }}/ {{ ansible_distribution_release }} nginx"
+    - "deb-src http://nginx.org/packages/{{ ansible_distribution|lower }}/ {{ ansible_distribution_release }} nginx"
+  register: nginx_repository_present
+
+- name: Install Nginx
+  apt: pkg={{ item }} state=latest update_cache=true cache_valid_time=3600
+  with_items:
+    - nginx
+  when: nginx_repository_present|success
+
+- name: Ensure main nginx configuration is up-to-date
+  template:
+    src: nginx.conf.j2
+    dest: "{{ nginx_config }}"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Ensure starts at boot
+  service: name=nginx enabled=yes
+
+- name: Ensure nginx paths are present
+  file: dest={{ item }} mode=755 state=directory owner=root group=root
+  with_items:
+    - "{{ nginx_vhosts_available }}"
+    - "{{ nginx_vhosts_enabled }}"
+    - "{{ nginx_vhosts_basedir }}"
+
+- name: Ensure default site is disabled
+  file: dest={{ nginx_vhosts_enabled }}/default state=absent
+
+- name: Ensure nginx vhost domain directories are present
+  file: dest={{ item.value.basedir }} mode=751 state=directory owner=root group={{ item.value.user }}
+  with_dict: "{{ vhosts }}"
+
+- name: Ensure nginx vhost public_html directories are present
+  file: dest={{ item.value.root }} mode=750 state=directory owner={{ item.value.user }} group={{ nginx_user }}
+  with_dict: "{{ vhosts }}"
+
+- name: Ensure nginx vhost tmp directories are present
+  file: dest={{ item.value.tmp }} mode=750 state=directory owner={{ item.value.user }} group={{ nginx_user }}
+  with_dict: "{{ vhosts }}"
+
+- name: Ensure nginx vhost log directories are present
+  file: dest={{ item.value.logdir }} mode=750 state=directory owner={{ item.value.user }} group={{ nginx_user }}
+  with_dict: "{{ vhosts }}"
+
+- name: Add nginx vhost configurations in available vhosts
+  template:
+    src: vhosts.j2
+    dest: "{{ nginx_vhosts_available }}/{{ item.key }}.conf"
+    mode: 0644
+  with_dict: "{{ vhosts }}"
+  when: vhosts
+
+- name: Create links for vhost configurations to enabled vhosts
+  file:
+    state=link
+    src={{ nginx_vhosts_available }}/{{ item.key }}.conf
+    dest={{ nginx_vhosts_enabled }}/{{ item.key }}.conf
+  with_dict: "{{ vhosts }}"
+  notify: reload nginx

@@ -1,0 +1,25 @@
+---
+
+- name: Ensure primary usergroups are present
+  group: name={{ item.primary_group }} state=present
+  with_items: "{{ users }}"
+
+- name: Ensure secondary usergroups are present
+  group: name={{ item.1 }} state=present
+  with_subelements:
+    - users
+    - secondary_groups
+
+- name: Ensure users are present
+  user:
+    name={{ item.username }}
+    password={{ item.password_hash }}
+    group={{ item.primary_group }}
+    groups={{ item.secondary_groups | join(",") }}
+    shell={{ item.shell }}
+    system={{ item.system }}
+    home={{ item.homedir }}
+    createhome=no
+    state=present
+  with_items: "{{ users }}"
+

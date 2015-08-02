@@ -1,0 +1,57 @@
+---
+
+- name: Ensure mariadb signing key is installed
+  apt_key:
+    url: "http://keyserver.ubuntu.com/pks/lookup?op=get&fingerprint=on&search=0xcbcb082a1bb943db"
+
+- name: Ensure mariadb repository is present
+  apt_repository: repo="{{item}}" state=present
+  with_items:
+    - "deb http://ams2.mirrors.digitalocean.com/mariadb/repo/10.0/debian jessie main"
+  register: mariadb_repository_present
+
+- name: Install mariadb
+  apt: pkg={{ item }} state=latest update_cache=true cache_valid_time=3600
+  with_items:
+    - mariadb-server
+  when: mariadb_repository_present|success
+
+- name: Install ansible mysql management dependency
+  apt: pkg=python-mysqldb state=latest update_cache=true cache_valid_time=3600
+
+- name: update mariadb root password for server hostname
+  mysql_user: name={{ mariadb_root_username }} host={{ ansible_hostname }} password={{ mariadb_root_password }} check_implicit_admin=yes
+  when: not "{{ ansible_hostname }}" == "localhost"
+
+- name: update mariadb root password
+  mysql_user: name={{ mariadb_root_username }} host={{ item }} password={{ mariadb_root_password }} check_implicit_admin=yes
+  with_items:
+    - 127.0.0.1
+    - ::1
+    - localhost
+
+- name: copy .my.cnf file with root password credentials
+  template: src=client/my.cnf.j2 dest=~/.my.cnf owner={{ ansible_ssh_user }} mode=0600
+
+- name: ensure databases are present
+  mysql_db: name={{ item }} state=present
+  with_items: "{{ mysql_databases }}"
+
+- name: set database privileges
+  mysql_user:
+    name={{ item.0.username }} password={{ item.0.password }} host={{ item.1 }} priv={{ item.0.priv | join('/') }}
+  with_subelements:
+    - mysql_users
+    - hosts
+
+- name: remove the mariadb test database
+  action: mysql_db db=test state=absent
+
+- name: Ensure mariadb configuration is up-to-date
+  template:
+    src: server/my.cnf.j2
+    dest: "{{ mariadb_config_path }}"
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart mariadb

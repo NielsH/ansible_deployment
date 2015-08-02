@@ -1,0 +1,8 @@
+---
+
+nginx_user: "nginx"
+nginx_config: "/etc/nginx/nginx.conf"
+nginx_vhosts_basedir: "/srv/www"
+nginx_vhosts_available: "/etc/nginx/sites-available"
+nginx_vhosts_enabled: "/etc/nginx/sites-enabled"
+

@@ -1,0 +1,13 @@
+---
+
+vhosts:
+  ansible.nuvini.com: 
+    user: "nuvini"
+    server_name: "ansible.nuvini.com"
+    root: "/srv/www/ansible.nuvini.com/public_html"
+    tmp: "/srv/www/ansible.nuvini.com/tmp"
+    basedir: "{{ nginx_vhosts_basedir }}/ansible.nuvini.com"
+    logdir: "{{ nginx_vhosts_basedir }}/ansible.nuvini.com/logs"
+    access_log: "{{ nginx_vhosts_basedir }}/ansible.nuvini.com/logs/access.log"
+    error_log: "{{ nginx_vhosts_basedir }}/ansible.nuvini.com/logs/error.log"
+  
